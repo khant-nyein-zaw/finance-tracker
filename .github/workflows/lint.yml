@@ -1,0 +1,32 @@
+name: linter
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install Dependencies
+        run: |
+          npm install
+      - name: Run Lint
+        run: npm run lint
+      - name: Run Format
+        run: npm run format
+      - name: Run Test
+        run: npm run test
