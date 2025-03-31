@@ -3,43 +3,45 @@ import {
   Get,
   Param,
   Post,
-  Req,
   HttpCode,
   Put,
   Delete,
-  Request,
+  Body,
 } from '@nestjs/common'
 import { TransactionsService } from './transactions.service'
-import { Transaction } from './interfaces/transactions.interface'
+import { CreateTransactionDto } from './dto/create-transaction.dto'
+import { UpdateTransactionDto } from './dto/update-transaction-dto'
 
 @Controller('transactions')
 export class TransactionsController {
   constructor(private readonly transactionService: TransactionsService) {}
 
   @Get()
-  index(): Transaction[] {
-    return this.transactionService.index()
+  findAll() {
+    return this.transactionService.findAll()
   }
 
   @Post()
-  create(@Req() request: Request): Transaction[] {
-    const { name, type, amount, reason }: any = request.body
-    return this.transactionService.create({ name, type, amount, reason })
+  create(@Body() createTransactionDto: CreateTransactionDto) {
+    return this.transactionService.create(createTransactionDto)
   }
 
   @Get(':id')
   @HttpCode(200)
-  show(@Param('id') id: string) {
-    return `Transaction #${id} was shown`
+  show(@Param('id') id: number) {
+    return this.transactionService.findOne(id)
   }
 
   @Put(':id')
-  update(@Param('id') id: string) {
-    return `Transaction #${id} was updated`
+  update(
+    @Param('id') id: number,
+    @Body() updateTransactionDto: UpdateTransactionDto,
+  ) {
+    return this.transactionService.update(id, updateTransactionDto)
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string) {
-    return `Transaction #${id} was deleted`
+  delete(@Param('id') id: number) {
+    return this.transactionService.delete(id)
   }
 }
