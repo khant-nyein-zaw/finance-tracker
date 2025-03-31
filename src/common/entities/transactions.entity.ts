@@ -1,7 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm'
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  BaseEntity,
+  ManyToOne,
+} from 'typeorm'
+import { Category } from './category.entity'
 
 @Entity('transactions')
-export class Transaction {
+export class Transaction extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number
 
@@ -22,4 +29,7 @@ export class Transaction {
 
   @Column({ name: 'category_id', type: 'int', nullable: true })
   categoryId: number
+
+  @ManyToOne((type) => Category, (category) => category.transactions)
+  category: Category
 }

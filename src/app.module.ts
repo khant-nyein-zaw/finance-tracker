@@ -5,6 +5,7 @@ import { TransactionsModule } from './transactions/transactions.module'
 import { DatabaseModule } from './db/db.module'
 import { ConfigModule } from '@nestjs/config'
 import app from 'config/app'
+import { CategoryModule } from './category/category.module'
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import app from 'config/app'
       load: [app],
     }),
     DatabaseModule,
+    CategoryModule,
     TransactionsModule,
   ],
   controllers: [AppController],
