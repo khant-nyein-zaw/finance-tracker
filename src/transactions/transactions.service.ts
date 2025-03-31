@@ -17,7 +17,7 @@ export class TransactionsService {
   }
 
   async create(createTransactionDto: CreateTransactionDto) {
-    // this.transactionsRepository.create()
+    return this.transactionsRepository.save(createTransactionDto)
   }
 
   findOne(id: number) {
