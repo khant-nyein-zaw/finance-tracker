@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   BaseEntity,
   ManyToOne,
+  JoinColumn,
 } from 'typeorm'
 import { Category } from './category.entity'
 
@@ -18,18 +19,19 @@ export class Transaction extends BaseEntity {
   @Column('decimal', { precision: 10, scale: 2 })
   amount: number
 
-  @Column('text')
+  @Column({ type: 'text', nullable: true })
   description: string
 
   @Column('date')
   date: Date
 
-  @Column({ name: 'user_id', type: 'int' })
+  @Column({ name: 'user_id', type: 'int', nullable: true })
   userId: number
 
   @Column({ name: 'category_id', type: 'int', nullable: true })
   categoryId: number
 
   @ManyToOne(() => Category, (category) => category.transactions)
+  @JoinColumn({ name: 'category_id' })
   category: Category
 }
