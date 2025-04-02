@@ -29,7 +29,7 @@ export class TransactionsController {
   @Get(':id')
   @HttpCode(200)
   show(@Param('id') id: number) {
-    return this.transactionService.findOne(id)
+    return this.transactionService.findOne(+id)
   }
 
   @Put(':id')
@@ -37,11 +37,11 @@ export class TransactionsController {
     @Param('id') id: number,
     @Body() updateTransactionDto: UpdateTransactionDto,
   ) {
-    return this.transactionService.update(id, updateTransactionDto)
+    return this.transactionService.update(+id, updateTransactionDto)
   }
 
   @Delete(':id')
   delete(@Param('id') id: number) {
-    return this.transactionService.delete(id)
+    return this.transactionService.delete(+id)
   }
 }

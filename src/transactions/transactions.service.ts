@@ -11,6 +11,8 @@ export class TransactionsService {
   constructor(
     @InjectRepository(Transaction)
     private readonly transactionsRepository: Repository<Transaction>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
     private dataSource: DataSource,
   ) {}
 
@@ -60,7 +62,18 @@ export class TransactionsService {
     return this.transactionsRepository.findOne({ where: { id } })
   }
 
-  async update(id: number, updateTransactionDto: UpdateTransactionDto) {}
+  async update(id: number, updateTransactionDto: UpdateTransactionDto) {
+    const category = await this.categoryRepository.findOne({
+      where: { name: updateTransactionDto.category },
+    })
+    return this.transactionsRepository.update(id, {
+      description: updateTransactionDto.description,
+      date: updateTransactionDto.date,
+      type: updateTransactionDto.type,
+      amount: updateTransactionDto.amount,
+      categoryId: category?.id,
+    })
+  }
 
   delete(id: number) {
     return this.transactionsRepository.delete(id)
