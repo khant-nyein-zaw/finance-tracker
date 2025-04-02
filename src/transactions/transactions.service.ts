@@ -1,38 +1,119 @@
-import { Injectable } from '@nestjs/common'
+import { HttpStatus, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Transaction } from 'src/common/entities/transactions.entity'
-import { Repository } from 'typeorm'
+import { DataSource, Repository } from 'typeorm'
 import { CreateTransactionDto } from './dto/create-transaction.dto'
-import { UpdateTransactionDto } from './dto/update-transaction-dto'
+import { UpdateTransactionDto } from './dto/update-transaction.dto'
+import { Category } from 'src/common/entities/category.entity'
+import { apiResponse } from 'src/common/helpers/api-responder'
 
 @Injectable()
 export class TransactionsService {
   constructor(
     @InjectRepository(Transaction)
     private readonly transactionsRepository: Repository<Transaction>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
+    private dataSource: DataSource,
   ) {}
 
-  findAll(): Promise<Transaction[]> {
-    return this.transactionsRepository.find()
+  async findAll() {
+    const transaction = await this.transactionsRepository.find()
+    return apiResponse(
+      HttpStatus.OK,
+      [{ message: 'Transactions fetched successfully!' }],
+      transaction,
+    )
   }
 
   async create(createTransactionDto: CreateTransactionDto) {
-    return this.transactionsRepository.save(createTransactionDto)
+    const queryRunner = this.dataSource.createQueryRunner()
+
+    await queryRunner.connect()
+
+    let category = await queryRunner.manager.findOne(Category, {
+      where: { name: createTransactionDto.category },
+    })
+
+    await queryRunner.startTransaction()
+    try {
+      if (!category) {
+        category = await queryRunner.manager.save(Category, {
+          name: createTransactionDto.category,
+        })
+      }
+
+      const transaction = await queryRunner.manager.save(Transaction, {
+        description: createTransactionDto.description,
+        date: createTransactionDto.date,
+        type: createTransactionDto.type,
+        amount: createTransactionDto.amount,
+        categoryId: category.id,
+      })
+
+      await queryRunner.commitTransaction()
+
+      return apiResponse(
+        HttpStatus.CREATED,
+        [
+          {
+            message: 'Transaction created successfully!',
+            property: 'transaction',
+          },
+        ],
+        transaction,
+      )
+    } catch (err) {
+      await queryRunner.rollbackTransaction()
+      return apiResponse(HttpStatus.INTERNAL_SERVER_ERROR, [
+        {
+          message: 'Failed when creating a new transaction!',
+          property: 'transaction',
+        },
+      ])
+    } finally {
+      await queryRunner.release()
+    }
   }
 
-  findOne(id: number) {
-    return this.transactionsRepository.findOne({ where: { id } })
+  async findOne(id: number) {
+    const transaction = await this.transactionsRepository.findOne({
+      where: { id },
+    })
+    return apiResponse(
+      HttpStatus.OK,
+      [{ message: 'Transaction fetched successfully!' }],
+      transaction,
+    )
   }
 
   async update(id: number, updateTransactionDto: UpdateTransactionDto) {
-    const transaction = await this.transactionsRepository.update(
-      id,
-      updateTransactionDto,
+    const category = await this.categoryRepository.findOne({
+      where: { name: updateTransactionDto.category },
+    })
+
+    const transaction = await this.transactionsRepository.update(id, {
+      description: updateTransactionDto.description,
+      date: updateTransactionDto.date,
+      type: updateTransactionDto.type,
+      amount: updateTransactionDto.amount,
+      categoryId: category?.id,
+    })
+
+    return apiResponse(
+      HttpStatus.OK,
+      [{ message: 'Transaction updated successfully!' }],
+      transaction,
     )
-    return { success: true, transaction }
   }
 
-  delete(id: number) {
-    return this.transactionsRepository.delete(id)
+  async delete(id: number) {
+    const deleteResult = await this.transactionsRepository.delete(id)
+
+    return apiResponse(
+      HttpStatus.OK,
+      [{ message: 'Transaction deleted successfully!' }],
+      deleteResult,
+    )
   }
 }

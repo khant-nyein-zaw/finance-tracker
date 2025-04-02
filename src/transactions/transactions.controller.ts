@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common'
 import { TransactionsService } from './transactions.service'
 import { CreateTransactionDto } from './dto/create-transaction.dto'
-import { UpdateTransactionDto } from './dto/update-transaction-dto'
+import { UpdateTransactionDto } from './dto/update-transaction.dto'
 
 @Controller('transactions')
 export class TransactionsController {
@@ -29,7 +29,7 @@ export class TransactionsController {
   @Get(':id')
   @HttpCode(200)
   show(@Param('id') id: number) {
-    return this.transactionService.findOne(id)
+    return this.transactionService.findOne(+id)
   }
 
   @Put(':id')
@@ -37,11 +37,11 @@ export class TransactionsController {
     @Param('id') id: number,
     @Body() updateTransactionDto: UpdateTransactionDto,
   ) {
-    return this.transactionService.update(id, updateTransactionDto)
+    return this.transactionService.update(+id, updateTransactionDto)
   }
 
   @Delete(':id')
   delete(@Param('id') id: number) {
-    return this.transactionService.delete(id)
+    return this.transactionService.delete(+id)
   }
 }
