@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common'
+import { HttpStatus, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Transaction } from 'src/common/entities/transactions.entity'
 import { DataSource, Repository } from 'typeorm'
 import { CreateTransactionDto } from './dto/create-transaction.dto'
-import { UpdateTransactionDto } from './dto/update-transaction-dto'
+import { UpdateTransactionDto } from './dto/update-transaction.dto'
 import { Category } from 'src/common/entities/category.entity'
+import { apiResponse } from 'src/common/helpers/api-responder'
 
 @Injectable()
 export class TransactionsService {
@@ -16,13 +17,16 @@ export class TransactionsService {
     private dataSource: DataSource,
   ) {}
 
-  findAll(): Promise<Transaction[]> {
-    return this.transactionsRepository.find()
+  async findAll() {
+    const transaction = await this.transactionsRepository.find()
+    return apiResponse(
+      HttpStatus.OK,
+      [{ message: 'Transactions fetched successfully!' }],
+      transaction,
+    )
   }
 
-  async create(
-    createTransactionDto: CreateTransactionDto,
-  ): Promise<Transaction | void> {
+  async create(createTransactionDto: CreateTransactionDto) {
     const queryRunner = this.dataSource.createQueryRunner()
 
     await queryRunner.connect()
@@ -49,33 +53,67 @@ export class TransactionsService {
 
       await queryRunner.commitTransaction()
 
-      return transaction
+      return apiResponse(
+        HttpStatus.CREATED,
+        [
+          {
+            message: 'Transaction created successfully!',
+            property: 'transaction',
+          },
+        ],
+        transaction,
+      )
     } catch (err) {
       await queryRunner.rollbackTransaction()
-      throw err
+      return apiResponse(HttpStatus.INTERNAL_SERVER_ERROR, [
+        {
+          message: 'Failed when creating a new transaction!',
+          property: 'transaction',
+        },
+      ])
     } finally {
       await queryRunner.release()
     }
   }
 
-  findOne(id: number) {
-    return this.transactionsRepository.findOne({ where: { id } })
+  async findOne(id: number) {
+    const transaction = await this.transactionsRepository.findOne({
+      where: { id },
+    })
+    return apiResponse(
+      HttpStatus.OK,
+      [{ message: 'Transaction fetched successfully!' }],
+      transaction,
+    )
   }
 
   async update(id: number, updateTransactionDto: UpdateTransactionDto) {
     const category = await this.categoryRepository.findOne({
       where: { name: updateTransactionDto.category },
     })
-    return this.transactionsRepository.update(id, {
+
+    const transaction = await this.transactionsRepository.update(id, {
       description: updateTransactionDto.description,
       date: updateTransactionDto.date,
       type: updateTransactionDto.type,
       amount: updateTransactionDto.amount,
       categoryId: category?.id,
     })
+
+    return apiResponse(
+      HttpStatus.OK,
+      [{ message: 'Transaction updated successfully!' }],
+      transaction,
+    )
   }
 
-  delete(id: number) {
-    return this.transactionsRepository.delete(id)
+  async delete(id: number) {
+    const deleteResult = await this.transactionsRepository.delete(id)
+
+    return apiResponse(
+      HttpStatus.OK,
+      [{ message: 'Transaction deleted successfully!' }],
+      deleteResult,
+    )
   }
 }
