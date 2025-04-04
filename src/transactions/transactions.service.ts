@@ -19,6 +19,10 @@ export class TransactionsService {
   ) {}
 
   async findAll(query: ListAllEntitiesDto) {
+    /*
+     * @todo
+     * need to re-check the pagination process works properly or not
+     */
     const transaction = await this.transactionsRepository
       .createQueryBuilder('transactions')
       .leftJoinAndSelect('transactions.category', 'category')
@@ -93,6 +97,7 @@ export class TransactionsService {
           name: true,
         },
       },
+    })
 
     return apiResponse(
       HttpStatus.OK,
