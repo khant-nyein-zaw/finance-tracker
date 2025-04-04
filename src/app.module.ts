@@ -29,7 +29,7 @@ import { logger } from './common/middleware/logger.middleware'
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(logger).forRoutes({
-      path: '*',
+      path: '{*path}',
       method: RequestMethod.GET,
     })
   }
