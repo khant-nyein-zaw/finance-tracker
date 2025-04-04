@@ -93,7 +93,7 @@ export class TransactionsService {
           name: true,
         },
       },
-    })
+
     return apiResponse(
       HttpStatus.OK,
       [{ message: 'Transaction fetched successfully!' }],
