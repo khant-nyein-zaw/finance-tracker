@@ -6,6 +6,7 @@ import { CreateTransactionDto } from './dto/create-transaction.dto'
 import { UpdateTransactionDto } from './dto/update-transaction.dto'
 import { Category } from 'src/common/entities/category.entity'
 import { apiResponse } from 'src/common/helpers/api-responder'
+import { ListAllEntitiesDto } from './dto/list-all-entities.dto'
 
 @Injectable()
 export class TransactionsService {
@@ -17,8 +18,15 @@ export class TransactionsService {
     private dataSource: DataSource,
   ) {}
 
-  async findAll() {
-    const transaction = await this.transactionsRepository.find()
+  async findAll(query: ListAllEntitiesDto) {
+    const transaction = await this.transactionsRepository
+      .createQueryBuilder('transactions')
+      .leftJoinAndSelect('transactions.category', 'category')
+      .orderBy('transactions.date', 'ASC')
+      .skip(query.offset)
+      .take(query.limit)
+      .getMany()
+
     return apiResponse(
       HttpStatus.OK,
       [{ message: 'Transactions fetched successfully!' }],
@@ -79,6 +87,12 @@ export class TransactionsService {
   async findOne(id: number) {
     const transaction = await this.transactionsRepository.findOne({
       where: { id },
+      relations: ['category'],
+      select: {
+        category: {
+          name: true,
+        },
+      },
     })
     return apiResponse(
       HttpStatus.OK,
@@ -88,9 +102,10 @@ export class TransactionsService {
   }
 
   async update(id: number, updateTransactionDto: UpdateTransactionDto) {
-    const category = await this.categoryRepository.findOne({
-      where: { name: updateTransactionDto.category },
-    })
+    const category = await this.categoryRepository
+      .createQueryBuilder('category')
+      .where('category.name = :name', { name: updateTransactionDto.category })
+      .getOne()
 
     const transaction = await this.transactionsRepository.update(id, {
       description: updateTransactionDto.description,
