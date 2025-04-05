@@ -12,6 +12,8 @@ import { ConfigModule } from '@nestjs/config'
 import app from 'config/app'
 import { CategoryModule } from './category/category.module'
 import { logger } from './common/middleware/logger.middleware'
+import { UsersModule } from './users/users.module'
+import { AuthModule } from './auth/auth.module'
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { logger } from './common/middleware/logger.middleware'
     DatabaseModule,
     CategoryModule,
     TransactionsModule,
+    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
