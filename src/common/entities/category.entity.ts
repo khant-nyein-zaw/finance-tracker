@@ -7,7 +7,7 @@ import {
   BaseEntity,
   ManyToOne,
 } from 'typeorm'
-import { Transaction } from './transactions.entity'
+import { Transaction } from './transaction.entity'
 
 @Entity('categories')
 export class Category extends BaseEntity {
