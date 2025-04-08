@@ -1,11 +1,10 @@
-import { HttpStatus, Injectable } from '@nestjs/common'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Transaction } from 'src/common/entities/transactions.entity'
+import { Transaction } from 'src/common/entities/transaction.entity'
 import { DataSource, Repository } from 'typeorm'
 import { CreateTransactionDto } from './dto/create-transaction.dto'
 import { UpdateTransactionDto } from './dto/update-transaction.dto'
 import { Category } from 'src/common/entities/category.entity'
-import { apiResponse } from 'src/common/helpers/api-responder'
 import { ListAllEntitiesDto } from './dto/list-all-entities.dto'
 
 @Injectable()
@@ -31,11 +30,7 @@ export class TransactionsService {
       .take(query.limit)
       .getMany()
 
-    return apiResponse(
-      HttpStatus.OK,
-      [{ message: 'Transactions fetched successfully!' }],
-      transaction,
-    )
+    return transaction
   }
 
   async create(createTransactionDto: CreateTransactionDto) {
@@ -65,24 +60,10 @@ export class TransactionsService {
 
       await queryRunner.commitTransaction()
 
-      return apiResponse(
-        HttpStatus.CREATED,
-        [
-          {
-            message: 'Transaction created successfully!',
-            property: 'transaction',
-          },
-        ],
-        transaction,
-      )
-    } catch (err) {
+      return transaction
+    } catch {
       await queryRunner.rollbackTransaction()
-      return apiResponse(HttpStatus.INTERNAL_SERVER_ERROR, [
-        {
-          message: 'Failed when creating a new transaction!',
-          property: 'transaction',
-        },
-      ])
+      throw new InternalServerErrorException()
     } finally {
       await queryRunner.release()
     }
@@ -99,11 +80,7 @@ export class TransactionsService {
       },
     })
 
-    return apiResponse(
-      HttpStatus.OK,
-      [{ message: 'Transaction fetched successfully!' }],
-      transaction,
-    )
+    return transaction
   }
 
   async update(id: number, updateTransactionDto: UpdateTransactionDto) {
@@ -120,20 +97,12 @@ export class TransactionsService {
       categoryId: category?.id,
     })
 
-    return apiResponse(
-      HttpStatus.OK,
-      [{ message: 'Transaction updated successfully!' }],
-      transaction,
-    )
+    return transaction
   }
 
   async delete(id: number) {
     const deleteResult = await this.transactionsRepository.delete(id)
 
-    return apiResponse(
-      HttpStatus.OK,
-      [{ message: 'Transaction deleted successfully!' }],
-      deleteResult,
-    )
+    return deleteResult
   }
 }
