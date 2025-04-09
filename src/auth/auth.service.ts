@@ -20,25 +20,20 @@ export class AuthService {
   async register(email: string, password: string) {
     const saltRound = genSaltSync()
     const hashedPassword = hashSync(password, saltRound)
-    console.log(hashedPassword)
 
     try {
-      const { password, ...userWithPassword } = await this.usersService.create(
-        email,
-        hashedPassword,
-      )
+      const { password, ...userWithoutPassword } =
+        await this.usersService.create(email, hashedPassword)
 
       return {
         access_token: await this.jwtService.signAsync(
-          { sub: userWithPassword.id, email: userWithPassword.email },
+          { sub: userWithoutPassword.id, email: userWithoutPassword.email },
           { secret: this.configService.get('jwt.secret') },
         ),
-        user: userWithPassword,
+        user: userWithoutPassword,
       }
     } catch {
-      throw new InternalServerErrorException(null, {
-        description: 'Failed when creating a new user!',
-      })
+      throw new InternalServerErrorException('Failed when creating a new user!')
     }
   }
 
@@ -49,17 +44,18 @@ export class AuthService {
     const user = await this.usersService.findOne(email)
 
     if (!user) {
-      throw new NotFoundException(null, { description: 'User not found!' })
+      throw new NotFoundException('User not found!')
     }
 
     if (!compareSync(hashedPassword, user.password)) {
-      throw new UnauthorizedException(null, {
-        description: 'Wrong credentials!',
-      })
+      throw new UnauthorizedException('Wrong credentials!')
     }
 
-    const { password, ...userWithPassword } = user
-    const payload = { sub: userWithPassword.id, email: userWithPassword.email }
+    const { password, ...userWithoutPassword } = user
+    const payload = {
+      sub: userWithoutPassword.id,
+      email: userWithoutPassword.email,
+    }
 
     return {
       access_token: await this.jwtService.signAsync(payload, {
