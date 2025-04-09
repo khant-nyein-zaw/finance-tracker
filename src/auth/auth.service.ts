@@ -33,9 +33,7 @@ export class AuthService {
         user: userWithoutPassword,
       }
     } catch {
-      throw new InternalServerErrorException(null, {
-        description: 'Failed when creating a new user!',
-      })
+      throw new InternalServerErrorException('Failed when creating a new user!')
     }
   }
 
@@ -46,13 +44,11 @@ export class AuthService {
     const user = await this.usersService.findOne(email)
 
     if (!user) {
-      throw new NotFoundException(null, { description: 'User not found!' })
+      throw new NotFoundException('User not found!')
     }
 
     if (!compareSync(hashedPassword, user.password)) {
-      throw new UnauthorizedException(null, {
-        description: 'Wrong credentials!',
-      })
+      throw new UnauthorizedException('Wrong credentials!')
     }
 
     const { password, ...userWithoutPassword } = user
