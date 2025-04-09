@@ -20,20 +20,17 @@ export class AuthService {
   async register(email: string, password: string) {
     const saltRound = genSaltSync()
     const hashedPassword = hashSync(password, saltRound)
-    console.log(hashedPassword)
 
     try {
-      const { password, ...userWithPassword } = await this.usersService.create(
-        email,
-        hashedPassword,
-      )
+      const { password, ...userWithoutPassword } =
+        await this.usersService.create(email, hashedPassword)
 
       return {
         access_token: await this.jwtService.signAsync(
-          { sub: userWithPassword.id, email: userWithPassword.email },
+          { sub: userWithoutPassword.id, email: userWithoutPassword.email },
           { secret: this.configService.get('jwt.secret') },
         ),
-        user: userWithPassword,
+        user: userWithoutPassword,
       }
     } catch {
       throw new InternalServerErrorException(null, {
@@ -58,8 +55,11 @@ export class AuthService {
       })
     }
 
-    const { password, ...userWithPassword } = user
-    const payload = { sub: userWithPassword.id, email: userWithPassword.email }
+    const { password, ...userWithoutPassword } = user
+    const payload = {
+      sub: userWithoutPassword.id,
+      email: userWithoutPassword.email,
+    }
 
     return {
       access_token: await this.jwtService.signAsync(payload, {
