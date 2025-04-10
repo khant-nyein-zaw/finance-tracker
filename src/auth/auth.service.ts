@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common'
@@ -15,6 +16,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly logger: Logger,
   ) {}
 
   async register(email: string, password: string) {
@@ -32,7 +34,8 @@ export class AuthService {
         ),
         user: userWithoutPassword,
       }
-    } catch {
+    } catch (error) {
+      this.logger.error(error)
       throw new InternalServerErrorException('Failed when creating a new user!')
     }
   }
@@ -41,7 +44,7 @@ export class AuthService {
     email: string,
     hashedPassword: string,
   ): Promise<{ access_token: string }> {
-    const user = await this.usersService.findOne(email)
+    const user = await this.usersService.findOneBy(email)
 
     if (!user) {
       throw new NotFoundException('User not found!')

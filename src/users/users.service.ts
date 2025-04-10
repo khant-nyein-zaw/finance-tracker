@@ -8,7 +8,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
   ) {}
-  async findOne(email: string) {
+  async findOneBy(email: string) {
     return this.usersRepository.findOne({ where: { email } })
   }
 
