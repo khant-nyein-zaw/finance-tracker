@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common'
@@ -8,6 +9,8 @@ import { UsersService } from 'src/users/users.service'
 import { JwtService } from '@nestjs/jwt'
 import { compareSync, genSaltSync, hashSync } from 'bcrypt-ts'
 import { ConfigService } from '@nestjs/config'
+import { RegisterDto } from './dto/register.dto'
+import { LoginDto } from './dto/login.dto'
 
 @Injectable()
 export class AuthService {
@@ -15,15 +18,18 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly logger: Logger,
   ) {}
 
-  async register(email: string, password: string) {
+  async register(
+    registerDto: RegisterDto,
+  ): Promise<{ access_token: string; user: any }> {
     const saltRound = genSaltSync()
-    const hashedPassword = hashSync(password, saltRound)
+    const hashedPassword = hashSync(registerDto.password, saltRound)
 
     try {
       const { password, ...userWithoutPassword } =
-        await this.usersService.create(email, hashedPassword)
+        await this.usersService.create(registerDto.email, hashedPassword)
 
       return {
         access_token: await this.jwtService.signAsync(
@@ -32,22 +38,20 @@ export class AuthService {
         ),
         user: userWithoutPassword,
       }
-    } catch {
+    } catch (error) {
+      this.logger.error(error)
       throw new InternalServerErrorException('Failed when creating a new user!')
     }
   }
 
-  async signIn(
-    email: string,
-    hashedPassword: string,
-  ): Promise<{ access_token: string }> {
-    const user = await this.usersService.findOne(email)
+  async signIn(loginDto: LoginDto): Promise<{ access_token: string }> {
+    const user = await this.usersService.findOneBy(loginDto.email)
 
     if (!user) {
       throw new NotFoundException('User not found!')
     }
 
-    if (!compareSync(hashedPassword, user.password)) {
+    if (!compareSync(loginDto.password, user.password)) {
       throw new UnauthorizedException('Wrong credentials!')
     }
 
