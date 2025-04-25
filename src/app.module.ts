@@ -12,6 +12,7 @@ import { CategoryModule } from './category/category.module'
 import { logger } from './common/middleware/logger.middleware'
 import { UsersModule } from './users/users.module'
 import { AuthModule } from './auth/auth.module'
+import { ReportModule } from './report/report.module'
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AuthModule } from './auth/auth.module'
     TransactionsModule,
     UsersModule,
     AuthModule,
+    ReportModule,
   ],
 })
 export class AppModule implements NestModule {

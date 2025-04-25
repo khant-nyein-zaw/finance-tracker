@@ -6,6 +6,7 @@ import { CreateTransactionDto } from './dto/create-transaction.dto'
 import { UpdateTransactionDto } from './dto/update-transaction.dto'
 import { Category } from 'src/common/entities/category.entity'
 import { ListAllEntitiesDto } from './dto/list-all-entities.dto'
+import { TransactionType } from 'src/common/enums/transaction-type.enum'
 
 @Injectable()
 export class TransactionsService {
@@ -38,25 +39,22 @@ export class TransactionsService {
 
     await queryRunner.connect()
 
-    let category = await queryRunner.manager.findOne(Category, {
+    let existingCategory = await queryRunner.manager.findOne(Category, {
       where: { name: createTransactionDto.category },
     })
 
     await queryRunner.startTransaction()
     try {
-      if (!category) {
-        category = await queryRunner.manager.save(Category, {
+      if (!existingCategory) {
+        existingCategory = await queryRunner.manager.save(Category, {
           name: createTransactionDto.category,
         })
       }
 
-      const transaction = await queryRunner.manager.save(Transaction, {
-        description: createTransactionDto.description,
-        date: createTransactionDto.date,
-        type: createTransactionDto.type,
-        amount: createTransactionDto.amount,
-        categoryId: category.id,
-      })
+      const { category, ...transactionData } = createTransactionDto
+      const data = { ...transactionData, categoryId: existingCategory.id }
+
+      const transaction = await queryRunner.manager.save(Transaction, data)
 
       await queryRunner.commitTransaction()
 
@@ -84,18 +82,15 @@ export class TransactionsService {
   }
 
   async update(id: number, updateTransactionDto: UpdateTransactionDto) {
-    const category = await this.categoryRepository
+    const existingCategory = await this.categoryRepository
       .createQueryBuilder('category')
       .where('category.name = :name', { name: updateTransactionDto.category })
       .getOne()
 
-    const transaction = await this.transactionsRepository.update(id, {
-      description: updateTransactionDto.description,
-      date: updateTransactionDto.date,
-      type: updateTransactionDto.type,
-      amount: updateTransactionDto.amount,
-      categoryId: category?.id,
-    })
+    const { category, ...transactionData } = updateTransactionDto
+    const data = { ...transactionData, categoryId: existingCategory?.id }
+
+    const transaction = await this.transactionsRepository.update(id, data)
 
     return transaction
   }
@@ -104,5 +99,45 @@ export class TransactionsService {
     const deleteResult = await this.transactionsRepository.delete(id)
 
     return deleteResult
+  }
+
+  async sumTransactionByType(
+    userId: number,
+    type: TransactionType,
+    startDate: string,
+    endDate: string,
+  ): Promise<number> {
+    const result = await this.transactionsRepository
+      .createQueryBuilder('transaction')
+      .select(`SUM(transaction.amount) as totalAmount`)
+      .where('transaction.userId = :userId', { userId })
+      .andWhere('transaction.date >= :startDate', { startDate })
+      .andWhere('transaction.date <= :endDate', { endDate })
+      .andWhere('transaction.type = :type', { type })
+      .getRawOne()
+
+    return parseFloat(result?.totalAmount || 0)
+  }
+
+  async groupTransactionsByCategory(
+    userId: number,
+    type: TransactionType,
+    startDate: string,
+    endDate: string,
+  ): Promise<any> {
+    const result = await this.transactionsRepository
+      .createQueryBuilder('transaction')
+      .select('category.id', 'categoryId')
+      .addSelect('category.name', 'categoryName')
+      .addSelect('transaction.amount', 'totalAmount')
+      .leftJoin('transaction.category', 'category')
+      .where('transaction.type = :type', { type })
+      .andWhere('transaction.userId = :userId', { userId })
+      .andWhere('transaction.date <= :startDate', { startDate })
+      .andWhere('transaction.date <= :endDate', { endDate })
+      .groupBy('category.id')
+      .getRawMany()
+
+    return result
   }
 }
