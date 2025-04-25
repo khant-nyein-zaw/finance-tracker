@@ -28,4 +28,7 @@ export class CreateTransactionDto {
   @IsString()
   @IsNotEmpty()
   category: string
+
+  @IsNumber()
+  userId: number
 }

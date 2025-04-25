@@ -1,10 +1,12 @@
 import {
   BaseEntity,
   Column,
+  CreateDateColumn,
   Entity,
   Index,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm'
 import { Transaction } from './transaction.entity'
 
@@ -22,4 +24,10 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Transaction, (transaction) => transaction.user)
   transactions: Transaction[]
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date
 }

@@ -4,8 +4,6 @@ import {
   NestModule,
   RequestMethod,
 } from '@nestjs/common'
-import { AppController } from './app.controller'
-import { AppService } from './app.service'
 import { TransactionsModule } from './transactions/transactions.module'
 import { DatabaseModule } from './db/db.module'
 import { ConfigModule } from '@nestjs/config'
@@ -14,6 +12,7 @@ import { CategoryModule } from './category/category.module'
 import { logger } from './common/middleware/logger.middleware'
 import { UsersModule } from './users/users.module'
 import { AuthModule } from './auth/auth.module'
+import { ReportModule } from './report/report.module'
 
 @Module({
   imports: [
@@ -26,9 +25,8 @@ import { AuthModule } from './auth/auth.module'
     TransactionsModule,
     UsersModule,
     AuthModule,
+    ReportModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
