@@ -23,15 +23,13 @@ export class TransactionsService {
      * @todo
      * need to re-check the pagination process works properly or not
      */
-    const transaction = await this.transactionsRepository
+    return await this.transactionsRepository
       .createQueryBuilder('transactions')
       .leftJoinAndSelect('transactions.category', 'category')
       .orderBy('transactions.date', 'ASC')
       .skip(query.offset)
       .take(query.limit)
       .getMany()
-
-    return transaction
   }
 
   async create(createTransactionDto: CreateTransactionDto) {
@@ -68,7 +66,7 @@ export class TransactionsService {
   }
 
   async findOne(id: number) {
-    const transaction = await this.transactionsRepository.findOne({
+    return await this.transactionsRepository.findOne({
       where: { id },
       relations: ['category'],
       select: {
@@ -77,8 +75,6 @@ export class TransactionsService {
         },
       },
     })
-
-    return transaction
   }
 
   async update(id: number, updateTransactionDto: UpdateTransactionDto) {
@@ -90,42 +86,39 @@ export class TransactionsService {
     const { category, ...transactionData } = updateTransactionDto
     const data = { ...transactionData, categoryId: existingCategory?.id }
 
-    const transaction = await this.transactionsRepository.update(id, data)
-
-    return transaction
+    return await this.transactionsRepository.update(id, data)
   }
 
   async delete(id: number) {
-    const deleteResult = await this.transactionsRepository.delete(id)
-
-    return deleteResult
+    return await this.transactionsRepository.delete(id)
   }
 
   async sumTransactionByType(
     userId: number,
     type: TransactionType,
-    startDate: string,
-    endDate: string,
+    startDate: Date,
+    endDate: Date,
   ): Promise<number> {
-    const result = await this.transactionsRepository
-      .createQueryBuilder('transaction')
-      .select(`SUM(transaction.amount) as totalAmount`)
-      .where('transaction.userId = :userId', { userId })
-      .andWhere('transaction.date >= :startDate', { startDate })
-      .andWhere('transaction.date <= :endDate', { endDate })
-      .andWhere('transaction.type = :type', { type })
-      .getRawOne()
+    const result: { totalAmount: string } | undefined =
+      await this.transactionsRepository
+        .createQueryBuilder('transaction')
+        .select(`SUM(transaction.amount) as totalAmount`)
+        .where('transaction.userId = :userId', { userId })
+        .andWhere('transaction.date >= :startDate', { startDate })
+        .andWhere('transaction.date <= :endDate', { endDate })
+        .andWhere('transaction.type = :type', { type })
+        .getRawOne()
 
-    return parseFloat(result?.totalAmount || 0)
+    return parseFloat(<string>result?.totalAmount) || 0
   }
 
   async groupTransactionsByCategory(
     userId: number,
     type: TransactionType,
-    startDate: string,
-    endDate: string,
+    startDate: Date,
+    endDate: Date,
   ): Promise<any> {
-    const result = await this.transactionsRepository
+    return await this.transactionsRepository
       .createQueryBuilder('transaction')
       .select('category.id', 'categoryId')
       .addSelect('category.name', 'categoryName')
@@ -137,7 +130,5 @@ export class TransactionsService {
       .andWhere('transaction.date <= :endDate', { endDate })
       .groupBy('category.id')
       .getRawMany()
-
-    return result
   }
 }

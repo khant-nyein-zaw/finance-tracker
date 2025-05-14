@@ -1,25 +1,24 @@
-import { Controller, Get, Query } from '@nestjs/common'
+import { Controller, Get, Param, Query } from '@nestjs/common'
 import { ReportService } from './report.service'
+import { GetReportDto } from './dto/get-report.dto'
 
 @Controller('report')
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
 
-  @Get('income-vs-expense')
+  @Get('income-vs-expense/:user_id')
   getIncomeVsExpense(
-    @Query('userId') userId: number,
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Param('user_id') userId: number,
+    @Query() getReportDto: GetReportDto,
   ) {
-    return this.reportService.getIncomeVsExpense(userId, startDate, endDate)
+    return this.reportService.getIncomeVsExpense(userId, getReportDto)
   }
 
-  @Get('spending-by-category')
+  @Get('spending-by-category/:user_id')
   getSpendingByCategory(
-    @Query('userId') userId: number,
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Param('user_id') userId: number,
+    @Query() getReportDto: GetReportDto,
   ) {
-    return this.reportService.getSpendingByCategory(userId, startDate, endDate)
+    return this.reportService.getSpendingByCategory(userId, getReportDto)
   }
 }
