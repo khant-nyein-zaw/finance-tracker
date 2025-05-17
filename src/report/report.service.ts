@@ -1,24 +1,25 @@
 import { Injectable } from '@nestjs/common'
 import { TransactionType } from 'src/common/enums/transaction-type.enum'
 import { TransactionsService } from 'src/transactions/transactions.service'
+import { GetReportDto } from './dto/get-report.dto'
 
 @Injectable()
 export class ReportService {
   constructor(private readonly transactionsService: TransactionsService) {}
 
-  async getIncomeVsExpense(userId: number, startDate: string, endDate: string) {
+  async getIncomeVsExpense(userId: number, getReportDto: GetReportDto) {
     const totalIncome = await this.transactionsService.sumTransactionByType(
       userId,
       TransactionType.INCOME,
-      startDate,
-      endDate,
+      getReportDto.startDate,
+      getReportDto.endDate,
     )
 
     const totalExpense = await this.transactionsService.sumTransactionByType(
       userId,
       TransactionType.EXPENSE,
-      startDate,
-      endDate,
+      getReportDto.startDate,
+      getReportDto.endDate,
     )
 
     return {
@@ -28,19 +29,13 @@ export class ReportService {
     }
   }
 
-  async getSpendingByCategory(
-    userId: number,
-    startDate: string,
-    endDate: string,
-  ) {
-    const spendingByCategory =
-      await this.transactionsService.groupTransactionsByCategory(
-        userId,
-        TransactionType.EXPENSE,
-        startDate,
-        endDate,
-      )
-
-    return spendingByCategory
+  async getSpendingByCategory(userId: number, getReportDto: GetReportDto) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return await this.transactionsService.groupTransactionsByCategory(
+      userId,
+      TransactionType.EXPENSE,
+      getReportDto.startDate,
+      getReportDto.endDate,
+    )
   }
 }

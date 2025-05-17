@@ -23,15 +23,13 @@ export class TransactionsService {
      * @todo
      * need to re-check the pagination process works properly or not
      */
-    const transaction = await this.transactionsRepository
+    return await this.transactionsRepository
       .createQueryBuilder('transactions')
       .leftJoinAndSelect('transactions.category', 'category')
       .orderBy('transactions.date', 'ASC')
       .skip(query.offset)
       .take(query.limit)
       .getMany()
-
-    return transaction
   }
 
   async create(createTransactionDto: CreateTransactionDto) {
@@ -51,6 +49,7 @@ export class TransactionsService {
         })
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { category, ...transactionData } = createTransactionDto
       const data = { ...transactionData, categoryId: existingCategory.id }
 
@@ -68,7 +67,7 @@ export class TransactionsService {
   }
 
   async findOne(id: number) {
-    const transaction = await this.transactionsRepository.findOne({
+    return await this.transactionsRepository.findOne({
       where: { id },
       relations: ['category'],
       select: {
@@ -77,8 +76,6 @@ export class TransactionsService {
         },
       },
     })
-
-    return transaction
   }
 
   async update(id: number, updateTransactionDto: UpdateTransactionDto) {
@@ -87,26 +84,24 @@ export class TransactionsService {
       .where('category.name = :name', { name: updateTransactionDto.category })
       .getOne()
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { category, ...transactionData } = updateTransactionDto
     const data = { ...transactionData, categoryId: existingCategory?.id }
 
-    const transaction = await this.transactionsRepository.update(id, data)
-
-    return transaction
+    return await this.transactionsRepository.update(id, data)
   }
 
   async delete(id: number) {
-    const deleteResult = await this.transactionsRepository.delete(id)
-
-    return deleteResult
+    return await this.transactionsRepository.delete(id)
   }
 
   async sumTransactionByType(
     userId: number,
     type: TransactionType,
-    startDate: string,
-    endDate: string,
+    startDate: Date,
+    endDate: Date,
   ): Promise<number> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const result = await this.transactionsRepository
       .createQueryBuilder('transaction')
       .select(`SUM(transaction.amount) as totalAmount`)
@@ -116,28 +111,34 @@ export class TransactionsService {
       .andWhere('transaction.type = :type', { type })
       .getRawOne()
 
-    return parseFloat(result?.totalAmount || 0)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    return parseFloat(<string>result.totalAmount || '0')
   }
 
   async groupTransactionsByCategory(
     userId: number,
     type: TransactionType,
-    startDate: string,
-    endDate: string,
-  ): Promise<any> {
+    startDate: Date,
+    endDate: Date,
+  ) {
     const result = await this.transactionsRepository
       .createQueryBuilder('transaction')
-      .select('category.id', 'categoryId')
-      .addSelect('category.name', 'categoryName')
-      .addSelect('transaction.amount', 'totalAmount')
+      .select('transaction.category_id', 'categoryId')
+      .addSelect('category.name', 'category')
+      .addSelect('SUM(transaction.amount)', 'total')
       .leftJoin('transaction.category', 'category')
       .where('transaction.type = :type', { type })
       .andWhere('transaction.userId = :userId', { userId })
-      .andWhere('transaction.date <= :startDate', { startDate })
+      .andWhere('transaction.date >= :startDate', { startDate })
       .andWhere('transaction.date <= :endDate', { endDate })
-      .groupBy('category.id')
+      .groupBy('categoryId')
       .getRawMany()
 
-    return result
+    return result.map((row) => ({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      amount: parseFloat(<string>row.total || '0'),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+      category: row.category,
+    }))
   }
 }
