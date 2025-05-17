@@ -30,7 +30,6 @@ export class ReportService {
   }
 
   async getSpendingByCategory(userId: number, getReportDto: GetReportDto) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await this.transactionsService.groupTransactionsByCategory(
       userId,
       TransactionType.EXPENSE,

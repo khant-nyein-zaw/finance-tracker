@@ -18,4 +18,8 @@ export class UsersService {
       password,
     })
   }
+
+  async findAll() {
+    return this.usersRepository.find()
+  }
 }
