@@ -32,7 +32,7 @@ export class Transaction extends BaseEntity {
   @Column({ name: 'user_id', type: 'int' })
   userId: number
 
-  @Column({ name: 'category_id', type: 'int', nullable: true })
+  @Column({ name: 'category_id', type: 'int' })
   categoryId: number
 
   @ManyToOne(() => User, (user) => user.transactions)
