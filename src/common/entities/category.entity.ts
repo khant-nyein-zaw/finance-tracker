@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   BaseEntity,
-  ManyToOne,
+  OneToMany,
 } from 'typeorm'
 import { Transaction } from './transaction.entity'
 
@@ -23,6 +23,6 @@ export class Category extends BaseEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date
 
-  @ManyToOne(() => Transaction, (transaction) => transaction.category)
+  @OneToMany(() => Transaction, (transaction) => transaction.category)
   transactions: Transaction[]
 }

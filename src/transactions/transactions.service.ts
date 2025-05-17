@@ -49,6 +49,7 @@ export class TransactionsService {
         })
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { category, ...transactionData } = createTransactionDto
       const data = { ...transactionData, categoryId: existingCategory.id }
 
@@ -83,6 +84,7 @@ export class TransactionsService {
       .where('category.name = :name', { name: updateTransactionDto.category })
       .getOne()
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { category, ...transactionData } = updateTransactionDto
     const data = { ...transactionData, categoryId: existingCategory?.id }
 
@@ -99,17 +101,18 @@ export class TransactionsService {
     startDate: Date,
     endDate: Date,
   ): Promise<number> {
-    const result: { totalAmount: string } | undefined =
-      await this.transactionsRepository
-        .createQueryBuilder('transaction')
-        .select(`SUM(transaction.amount) as totalAmount`)
-        .where('transaction.userId = :userId', { userId })
-        .andWhere('transaction.date >= :startDate', { startDate })
-        .andWhere('transaction.date <= :endDate', { endDate })
-        .andWhere('transaction.type = :type', { type })
-        .getRawOne()
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const result = await this.transactionsRepository
+      .createQueryBuilder('transaction')
+      .select(`SUM(transaction.amount) as totalAmount`)
+      .where('transaction.userId = :userId', { userId })
+      .andWhere('transaction.date >= :startDate', { startDate })
+      .andWhere('transaction.date <= :endDate', { endDate })
+      .andWhere('transaction.type = :type', { type })
+      .getRawOne()
 
-    return parseFloat(<string>result?.totalAmount) || 0
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    return parseFloat(<string>result.totalAmount || '0')
   }
 
   async groupTransactionsByCategory(
@@ -117,18 +120,25 @@ export class TransactionsService {
     type: TransactionType,
     startDate: Date,
     endDate: Date,
-  ): Promise<any> {
-    return await this.transactionsRepository
+  ) {
+    const result = await this.transactionsRepository
       .createQueryBuilder('transaction')
-      .select('category.id', 'categoryId')
-      .addSelect('category.name', 'categoryName')
-      .addSelect('transaction.amount', 'totalAmount')
+      .select('transaction.category_id', 'categoryId')
+      .addSelect('category.name', 'category')
+      .addSelect('SUM(transaction.amount)', 'total')
       .leftJoin('transaction.category', 'category')
       .where('transaction.type = :type', { type })
       .andWhere('transaction.userId = :userId', { userId })
-      .andWhere('transaction.date <= :startDate', { startDate })
+      .andWhere('transaction.date >= :startDate', { startDate })
       .andWhere('transaction.date <= :endDate', { endDate })
-      .groupBy('category.id')
+      .groupBy('categoryId')
       .getRawMany()
+
+    return result.map((row) => ({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      amount: parseFloat(<string>row.total || '0'),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+      category: row.category,
+    }))
   }
 }
