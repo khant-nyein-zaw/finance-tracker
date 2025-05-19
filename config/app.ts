@@ -1,3 +1,5 @@
+import * as fs from 'node:fs'
+
 export default () => ({
   database: {
     host: process.env.DATABASE_HOST,
@@ -11,8 +13,6 @@ export default () => ({
     expires_in: process.env.JWT_EXPIRES_IN,
   },
   firebase: {
-    project_id: process.env.FIREBASE_PROJECT_ID,
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    private_key: process.env.FIREBASE_PRIVATE_KEY,
+    key: fs.readFileSync(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string),
   },
 })

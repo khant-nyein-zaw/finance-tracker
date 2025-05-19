@@ -14,8 +14,9 @@ import { UsersModule } from './users/users.module'
 import { AuthModule } from './auth/auth.module'
 import { ReportModule } from './report/report.module'
 import { ScheduleModule } from '@nestjs/schedule'
-import { TaskModule } from './task/task.module'
+import { CronModule } from './cron/cron.module'
 import { NotificationModule } from './notification/notification.module'
+import { FcmModule } from './fcm/fcm.module'
 
 @Module({
   imports: [
@@ -30,8 +31,9 @@ import { NotificationModule } from './notification/notification.module'
     AuthModule,
     ReportModule,
     ScheduleModule.forRoot(),
-    TaskModule,
+    CronModule,
     NotificationModule,
+    FcmModule,
   ],
 })
 export class AppModule implements NestModule {

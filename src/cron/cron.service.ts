@@ -5,7 +5,7 @@ import { UsersService } from '../users/users.service'
 import { ReportService } from '../report/report.service'
 
 @Injectable()
-export class TaskService {
+export class CronService {
   constructor(
     // private readonly logger: Logger,
     private readonly usersService: UsersService,
@@ -13,7 +13,7 @@ export class TaskService {
     private readonly reportService: ReportService,
   ) {}
 
-  @Cron(CronExpression.EVERY_10_MINUTES, {
+  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT, {
     name: 'monthlyFinancialReview',
     timeZone: 'Asia/Yangon',
   })
@@ -25,17 +25,20 @@ export class TaskService {
     const month = now.getMonth()
 
     const startDate = new Date(year, month, 1)
-    const endDate = new Date(year, month, 0, 23, 59, 59)
+    const endDate = new Date(year, month + 1, 0, 23, 59, 59)
 
     for (const user of users) {
-      const { balance } = await this.reportService.getIncomeVsExpense(user.id, {
-        startDate,
-        endDate,
-      })
+      const { totalIncome, totalExpense, balance } =
+        await this.reportService.getIncomeVsExpense(user.id, {
+          startDate,
+          endDate,
+        })
       if (balance < 0) {
         await this.notificationService.sendLowBalanceNotification(
           user.id,
-          balance,
+          user.email,
+          totalIncome,
+          totalExpense,
         )
       }
     }
