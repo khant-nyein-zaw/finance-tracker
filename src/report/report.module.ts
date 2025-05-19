@@ -10,5 +10,6 @@ import { Category } from 'src/common/entities/category.entity'
   imports: [TypeOrmModule.forFeature([Transaction, Category])],
   controllers: [ReportController],
   providers: [ReportService, TransactionsService, Logger],
+  exports: [ReportService],
 })
 export class ReportModule {}
